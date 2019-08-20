@@ -1,0 +1,11 @@
+# Use local.*.example files to see how to override values
+servers:
+  - host: 0.0.0.0
+    port: 3000
+
+database:
+  host: 127.0.0.1
+  port: 5432
+  database: blog
+  user: postgre
+  password: overridePassword

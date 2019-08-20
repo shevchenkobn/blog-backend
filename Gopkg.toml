@@ -32,3 +32,7 @@
 [[constraint]]
   name = "github.com/spf13/viper"
   version = "1.4.0"
+
+[[constraint]]
+  name = "github.com/go-pg/pg"
+  version = "8.0.5"
