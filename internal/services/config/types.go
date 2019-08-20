@@ -22,12 +22,22 @@ type config struct {
 	servers []serverConfig
 }
 func (c *config) Servers() []ServerConfig {
-	return c.servers[:]
+	returnServers := make([]ServerConfig, len(c.servers), len(c.servers))
+	for i, server := range c.servers {
+		returnServers[i] = &server
+	}
+	return returnServers
 }
 
 type serverConfig struct {
 	 host string
 	 port int
+}
+func (c *serverConfig) Host() string {
+	return c.host
+}
+func (c *serverConfig) Port() int {
+	return c.port
 }
 
 type dbConfig struct {
@@ -37,9 +47,22 @@ type dbConfig struct {
 	user string
 	password string
 }
-
-func newConfig(viper *viper.Viper) Config {
-	settings := viper.Get
+func (c *dbConfig) Host() string {
+	return c.host
+}
+func (c *dbConfig) Port() int {
+	return c.port
+}
+func (c *dbConfig) Database() string {
+	return c.database
+}
+func (c *dbConfig) User() string {
+	return c.user
+}
+func (c *dbConfig) Password() string {
+	return c.password
 }
 
-func getDefaultConfig
+func newConfig(viper *viper.Viper) *Config {
+	return nil // TODO:
+}
