@@ -20,16 +20,32 @@ func GetConfigLocations() [2]string {
 	return locations
 }
 
-func GetConfig() *viper.Viper {
+func GetConfig() Config {
 	locations := GetConfigLocations()
-	config := &viper.Viper{}
-	viper.SetConfigName(DefaultConfigFileName)
+	runtimeViper := viper.New()
+	runtimeViper.SetConfigName(DefaultConfigFileName)
 	for _, location := range locations {
-		viper.AddConfigPath(location)
+		runtimeViper.AddConfigPath(location)
 	}
-	viper.SetConfigName(OverrideConfigFileName)
+	defaultErr := runtimeViper.ReadInConfig()
+	if defaultErr != nil {
+		if _, ok := defaultErr.(viper.ConfigFileNotFoundError); !ok {
+			panic(defaultErr)
+		}
+	}
+	runtimeViper.SetConfigName(OverrideConfigFileName)
 	for _, location := range locations {
-		viper.AddConfigPath(location)
+		runtimeViper.AddConfigPath(location)
+	}
+	err := runtimeViper.MergeInConfig()
+	if err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok || defaultErr != nil {
+			panic(err)
+		}
+	}
+	config, err := newConfig(runtimeViper)
+	if err != nil {
+		panic(err)
 	}
 
 	return config

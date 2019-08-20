@@ -20,6 +20,7 @@ type DbConfig interface {
 
 type config struct {
 	servers []serverConfig
+	db dbConfig
 }
 func (c *config) Servers() []ServerConfig {
 	returnServers := make([]ServerConfig, len(c.servers), len(c.servers))
@@ -27,6 +28,9 @@ func (c *config) Servers() []ServerConfig {
 		returnServers[i] = &server
 	}
 	return returnServers
+}
+func (c *config) Db() DbConfig {
+	return &c.db
 }
 
 type serverConfig struct {
@@ -63,6 +67,8 @@ func (c *dbConfig) Password() string {
 	return c.password
 }
 
-func newConfig(viper *viper.Viper) *Config {
-	return nil // TODO:
+func newConfig(viper *viper.Viper) (Config, error) {
+	config := new(config)
+	err := viper.Unmarshal(config)
+	return config, err
 }

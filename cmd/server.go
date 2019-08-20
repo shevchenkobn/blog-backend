@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
+	"github.com/shevchenkobn/blog-backend/internal/services/config"
 )
 
 func main() {
-	fmt.Println(viper.AllKeys())
+	conf := config.GetConfig()
+	fmt.Println(conf)
 }
