@@ -8,4 +8,4 @@ db:
   port: 5432
   database: blog
   user: postgre
-  password: overridePassword
+  password: overrideThePassword

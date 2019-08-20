@@ -19,56 +19,59 @@ type DbConfig interface {
 }
 
 type config struct {
-	servers []serverConfig
-	db dbConfig
+	ServersField []serverConfig `mapstructure:"servers"`
+	DbField      dbConfig       `mapstructure:"db"`
 }
 func (c *config) Servers() []ServerConfig {
-	returnServers := make([]ServerConfig, len(c.servers), len(c.servers))
-	for i, server := range c.servers {
+	returnServers := make([]ServerConfig, len(c.ServersField), len(c.ServersField))
+	for i, server := range c.ServersField {
 		returnServers[i] = &server
 	}
 	return returnServers
 }
 func (c *config) Db() DbConfig {
-	return &c.db
+	return &c.DbField
 }
 
 type serverConfig struct {
-	 host string
-	 port int
+	 HostField string `mapstructure:"host"`
+	 PortField int    `mapstructure:"port"`
 }
 func (c *serverConfig) Host() string {
-	return c.host
+	return c.HostField
 }
 func (c *serverConfig) Port() int {
-	return c.port
+	return c.PortField
 }
 
 type dbConfig struct {
-	host string
-	port int
-	database string
-	user string
-	password string
+	HostField     string `mapstructure:"host"`
+	PortField     int    `mapstructure:"port"`
+	DatabaseField string `mapstructure:"database"`
+	UserField     string `mapstructure:"user"`
+	PasswordField string `mapstructure:"password"`
 }
 func (c *dbConfig) Host() string {
-	return c.host
+	return c.HostField
 }
 func (c *dbConfig) Port() int {
-	return c.port
+	return c.PortField
 }
 func (c *dbConfig) Database() string {
-	return c.database
+	return c.DatabaseField
 }
 func (c *dbConfig) User() string {
-	return c.user
+	return c.UserField
 }
 func (c *dbConfig) Password() string {
-	return c.password
+	return c.PasswordField
 }
 
 func newConfig(viper *viper.Viper) (Config, error) {
 	config := new(config)
 	err := viper.Unmarshal(config)
-	return config, err
+	if err != nil {
+		return nil, err
+	}
+	return config, nil
 }
