@@ -3,7 +3,7 @@ servers:
   - host: 0.0.0.0
     port: 3000
 
-database:
+db:
   host: 127.0.0.1
   port: 5432
   database: blog
