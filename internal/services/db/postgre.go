@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"github.com/go-pg/pg"
 
-	"../config"
-	"../logger"
-	"../onexit"
+	"github.com/shevchenkobn/blog-backend/internal/services/config"
+	"github.com/shevchenkobn/blog-backend/internal/services/logger"
+	"github.com/shevchenkobn/blog-backend/internal/types"
 )
 
 type PostgreDB struct {
 	db *pg.DB
 	logger *logger.Logger
-	onExit *onexit.ExitHandler
-	callback onexit.Callback
+	onExit types.ExitHandler
+	callback types.ExitHandlerCallback
 }
 func (p *PostgreDB) Db() *pg.DB {
 	return p.db
@@ -27,7 +27,7 @@ func (p *PostgreDB) Close() {
 	p.onExit.RemoveCallback(p.callback)
 }
 
-func NewPostgreDB(config config.Config, onExit *onexit.ExitHandler, l *logger.Logger) *PostgreDB {
+func NewPostgreDB(config config.Config, onExit types.ExitHandler, l *logger.Logger) *PostgreDB {
 	connectConfig := &pg.Options{
 		Addr: fmt.Sprintf("%s:%d", config.Db().Host(), config.Db().Port()),
 		Database: config.Db().Database(),

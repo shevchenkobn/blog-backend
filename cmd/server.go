@@ -1,13 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
-	"../internal/di"
+	"github.com/shevchenkobn/blog-backend/internal/di"
 )
 
 func main() {
+	// Start handling exits
+	exitHandler := di.GetExitHandler()
+	exitHandler.StartListeningToSignals()
+	defer exitHandler.Recover()
+
 	connection := di.GetPostgreDB()
-	time.Sleep(1)
-	connection.Close()
+	time.Sleep(5000)
+	fmt.Println(connection)
+	select {}
 }

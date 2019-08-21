@@ -4,10 +4,11 @@ import (
 	"os"
 	"syscall"
 
-	"../services/config"
-	"../services/db"
-	"../services/logger"
-	"../services/onexit"
+	"github.com/shevchenkobn/blog-backend/internal/services/config"
+	"github.com/shevchenkobn/blog-backend/internal/services/db"
+	"github.com/shevchenkobn/blog-backend/internal/services/logger"
+	"github.com/shevchenkobn/blog-backend/internal/services/onexit"
+	"github.com/shevchenkobn/blog-backend/internal/types"
 )
 
 var postgreDb *db.PostgreDB
@@ -26,8 +27,8 @@ func GetConfig() config.Config {
 	return cachedConfig
 }
 
-var exitHandler *onexit.ExitHandler
-func GetExitHandler() *onexit.ExitHandler {
+var exitHandler types.ExitHandler
+func GetExitHandler() types.ExitHandler {
 	if exitHandler == nil {
 		exitHandler = onexit.NewExitHandler(GetLogger(), GetExitSignals())
 	}
