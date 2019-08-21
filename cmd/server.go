@@ -1,11 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"github.com/shevchenkobn/blog-backend/internal/services/config"
+	"time"
+
+	"../internal/di"
 )
 
 func main() {
-	conf := config.GetConfig()
-	fmt.Println(conf)
+	connection := di.GetPostgreDB()
+	time.Sleep(1)
+	connection.Close()
 }
