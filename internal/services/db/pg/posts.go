@@ -1,6 +1,7 @@
 package pg
 
 import (
+	"github.com/go-pg/pg/orm"
 	uuid "github.com/satori/go.uuid"
 	"github.com/shevchenkobn/blog-backend/internal/repository"
 	"github.com/shevchenkobn/blog-backend/internal/repository/model"
@@ -11,11 +12,11 @@ import (
 )
 
 type post struct {
-	PostIdField uuid.UUID `sql:"post_id,pk,use_zero"`
-	AuthorNameField string `sql:"author_name,notnull"`
-	ContentField string `sql:"content,notnull"`
-	PostedAtField time.Time `sql:"posted_at,default:(now() at time zone 'utc'),"` // FIXME: change to now
-	CommentsField []comment
+	PostIdField     uuid.UUID `sql:"post_id,type:uuid,pk,use_zero"`
+	AuthorNameField string    `sql:"author_name,notnull"`
+	ContentField    string    `sql:"content,notnull"`
+	PostedAtField   time.Time `sql:"posted_at,default:(now() at time zone 'utc')"` // FIXME: change to now
+	Comments        []comment `sql:"on_delete:CASCADE"`
 }
 func (p *post) PostId() uuid.UUID {
 	return p.PostIdField
@@ -35,8 +36,8 @@ func (p *post) SetContent(content string) {
 func (p *post) PostedAt() time.Time {
 	return p.PostedAtField
 }
-func (p *post) Comments() []models.Comment {
-	return p.Comments()
+func (p *post) GetComments() []models.Comment {
+	return toInterface(p.Comments)
 }
 func newPost(seed models.PostSeed) (*post, error) {
 	p := new(post)
@@ -55,10 +56,10 @@ func newPost(seed models.PostSeed) (*post, error) {
 	if seed.PostedAt == util.ZeroTime {
 		p.PostedAtField = time.Now()
 	}
-	p.CommentsField = make([]comment, 0, 1)
+	p.Comments = make([]comment, 0, 1)
 	return p, nil
 }
-//var zeroPost = &post{}
+var zeroPost = &post{}
 
 type PostRepository struct {
 	db *db.PostgreDB
@@ -78,9 +79,10 @@ func (r *PostRepository) GetAll() ([]models.Post, error) {
 func NewPostRepository(db *db.PostgreDB) *PostRepository {
 	r := new(PostRepository)
 	r.db = db
-	// ensure table
-	p := &post{PostIdField: util.ZeroUuid}
-	err := r.db.Db().Select(&p)
+	err := r.db.Db().CreateTable(zeroPost, &orm.CreateTableOptions{
+		FKConstraints: true,
+		IfNotExists: true,
+	})
 	if err != nil {
 		panic(err)
 	}

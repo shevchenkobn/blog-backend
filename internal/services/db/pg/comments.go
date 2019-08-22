@@ -1,20 +1,23 @@
 package pg
 
 import (
+	"github.com/go-pg/pg/orm"
 	uuid "github.com/satori/go.uuid"
+	"time"
+
 	"github.com/shevchenkobn/blog-backend/internal/repository"
 	"github.com/shevchenkobn/blog-backend/internal/repository/model"
 	commentm "github.com/shevchenkobn/blog-backend/internal/repository/model/comment"
 	"github.com/shevchenkobn/blog-backend/internal/services/db"
 	"github.com/shevchenkobn/blog-backend/internal/util"
-	"time"
 )
 
 type comment struct {
-	CommentIdField uuid.UUID `sql:"comment_id,pk,use_zero"`
-	AuthorNameField string `sql:"author_name,notnull"`
-	PostField *post
-	ContentField string `sql:"content,notnull"`
+	CommentIdField   uuid.UUID `sql:"comment_id,pk,type:uuid,use_zero"`
+	AuthorNameField  string    `sql:"author_name,notnull"`
+	PostId           uuid.UUID `sql:"post_id,type:uuid,notnull,on_delete:CASCADE"`
+	Post             *post
+	ContentField     string    `sql:"content,notnull"`
 	CommentedAtField time.Time `sql:"posted_at,default:(now() at time zone 'utc'),"` // FIXME: change to now
 }
 func (p *comment) CommentId() uuid.UUID {
@@ -26,8 +29,8 @@ func (p *comment) AuthorName() string {
 func (p *comment) SetAuthorName(author string) {
 	p.AuthorNameField = author
 }
-func (p *comment) Post() models.Post {
-	return p.PostField
+func (p *comment) GetPost() models.Post {
+	return p.Post
 }
 func (p *comment) Content() string {
 	return p.AuthorNameField
@@ -58,37 +61,43 @@ func newComment(seed models.CommentSeed) (*comment, error) {
 		c.CommentIdField = uuid.NewV4()
 	}
 	c.AuthorNameField = seed.AuthorName
-	c.PostField = post
+	c.Post = post
 	c.ContentField = seed.Content
 	if c.CommentedAtField == util.ZeroTime {
 		c.CommentedAtField = time.Now()
 	}
 	return c, nil
 }
+var zeroComment = &comment{}
 
 type CommentRepository struct {
 	db *db.PostgreDB
 }
 func (r *CommentRepository) GetAllForPost(postId uuid.UUID) ([]models.Comment, error) {
-	var post = &post{PostIdField: postId}
-	err := r.db.Db().Model(post).Column("_").Relation("Comments").Select()
+	var comments []comment
+	err := r.db.Db().Model(&comments).Where("post_id = ?", postId).Select()
 	if err != nil {
 		return nil, err
 	}
-	//var commentsByInterface = make([]commentm.Comment, len(comments))
-	//for i, c := range post.Comments() {
-	//	commentsByInterface[i] = &c
-	//}
-	return post.Comments(), err
+	return toInterface(comments), nil
 }
 func NewCommentRepository(db *db.PostgreDB) *CommentRepository {
 	r := new(CommentRepository)
 	r.db = db
-	// ensure table
-	c := &comment{CommentIdField: util.ZeroUuid}
-	err := r.db.Db().Select(&c)
+	err := r.db.Db().CreateTable(zeroComment, &orm.CreateTableOptions{
+		FKConstraints: true,
+		IfNotExists: true,
+	})
 	if err != nil {
 		panic(err)
 	}
 	return r
+}
+
+func toInterface(comments []comment) []models.Comment {
+	var commentsByInterface = make([]models.Comment, len(comments))
+	for i, c := range comments {
+		commentsByInterface[i] = &c
+	}
+	return commentsByInterface
 }

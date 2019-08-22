@@ -9,7 +9,7 @@ type Comment interface {
 	CommentId() uuid.UUID
 	AuthorName() string
 	SetAuthorName(author string)
-	Post() Post
+	GetPost() Post
 	Content() string
 	SetContent(content string)
 	CommentedAt() time.Time
@@ -29,7 +29,7 @@ type Post interface {
 	Content() string
 	SetContent(content string)
 	PostedAt() time.Time
-	Comments() []Comment // readonly, no copying for memory efficiency
+	GetComments() []Comment // readonly, no copying for memory efficiency
 }
 type PostSeed struct {
 	PostId     uuid.UUID
