@@ -14,12 +14,12 @@ func (e ModelError) Error() string {
 
 type Posts interface {
 	GetAll() ([]models.Post, error)
-	//CreateOne(post post.PostSeed) (post.Post, error)
-	//DeleteOne(postId uuid.UUID, returning bool) (post.Post, error)
+	CreateOne(post *models.PostSeed) (models.Post, error)
+	DeleteOne(postId uuid.UUID, returning bool) (models.Post, error)
 }
 
 type Comments interface {
 	GetAllForPost(postId uuid.UUID) ([]models.Comment, error)
-	//CreateOne(comment comment.PostSeed) (comment.Comment, error)
-	//DeleteOne(commentId uuid.UUID, returning bool) (comment.Comment, error)
+	CreateOne(comment *models.CommentSeed) (models.Comment, error)
+	DeleteOne(commentId uuid.UUID, returning bool) (models.Comment, error)
 }

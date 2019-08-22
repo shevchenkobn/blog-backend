@@ -15,7 +15,7 @@ import (
 type comment struct {
 	CommentIdField   uuid.UUID `sql:"comment_id,pk,type:uuid,use_zero"`
 	AuthorNameField  string    `sql:"author_name,notnull"`
-	PostId           uuid.UUID `sql:"post_id,type:uuid,notnull,on_delete:CASCADE"`
+	PostId           uuid.UUID `sql:"post_id,type:uuid,notnull"`
 	Post             *post
 	ContentField     string    `sql:"content,notnull"`
 	CommentedAtField time.Time `sql:"posted_at,default:(now() at time zone 'utc'),"` // FIXME: change to now
@@ -41,7 +41,7 @@ func (p *comment) SetContent(content string) {
 func (p *comment) CommentedAt() time.Time {
 	return p.CommentedAtField
 }
-func newComment(seed models.CommentSeed) (*comment, error) {
+func newComment(seed *models.CommentSeed) (*comment, error) {
 	c := new(comment)
 	if seed.AuthorName == "" {
 		return nil, &repository.ModelError{Code: commentm.AuthorNameRequired}
@@ -59,6 +59,8 @@ func newComment(seed models.CommentSeed) (*comment, error) {
 
 	if c.CommentIdField == util.ZeroUuid {
 		c.CommentIdField = uuid.NewV4()
+	} else {
+		c.CommentIdField = seed.CommentId
 	}
 	c.AuthorNameField = seed.AuthorName
 	c.Post = post
@@ -73,14 +75,7 @@ var zeroComment = &comment{}
 type CommentRepository struct {
 	db *db.PostgreDB
 }
-func (r *CommentRepository) GetAllForPost(postId uuid.UUID) ([]models.Comment, error) {
-	var comments []comment
-	err := r.db.Db().Model(&comments).Where("post_id = ?", postId).Select()
-	if err != nil {
-		return nil, err
-	}
-	return toInterface(comments), nil
-}
+
 func NewCommentRepository(db *db.PostgreDB) *CommentRepository {
 	r := new(CommentRepository)
 	r.db = db
@@ -92,6 +87,44 @@ func NewCommentRepository(db *db.PostgreDB) *CommentRepository {
 		panic(err)
 	}
 	return r
+}
+
+func (r *CommentRepository) GetAllForPost(postId uuid.UUID) ([]models.Comment, error) {
+	var comments []comment
+	err := r.db.Db().Model(&comments).Where("post_id = ?", postId).Select()
+	if err != nil {
+		return nil, err
+	}
+	return toInterface(comments), nil
+}
+
+func (r *CommentRepository) CreateOne(comment *models.CommentSeed) (models.Comment, error) {
+	c, err := newComment(comment)
+	if err != nil {
+		return nil, err
+	}
+	_, err = r.db.Db().Model(c).Returning("*").Insert()
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func (r *CommentRepository) DeleteOne(commentId uuid.UUID, returning bool) (models.Comment, error) {
+	c := &comment{}
+	q := r.db.Db().Model(c).Where("comment_id = ?", commentId)
+	if returning {
+		q = q.Returning("*")
+	}
+	_, err := q.Delete()
+	if err != nil {
+		return nil, err
+	}
+	if returning {
+		return c, nil
+	} else {
+		return nil, nil
+	}
 }
 
 func toInterface(comments []comment) []models.Comment {
