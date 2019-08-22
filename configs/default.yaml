@@ -3,6 +3,9 @@ servers:
   - host: 0.0.0.0
     port: 3000
 
+openapi:
+  configPath: ./api/openapi.yaml
+
 db:
   host: 127.0.0.1
   port: 5432

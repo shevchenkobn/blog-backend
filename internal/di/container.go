@@ -7,8 +7,17 @@ import (
 	"github.com/shevchenkobn/blog-backend/internal/services/db/pg"
 	"github.com/shevchenkobn/blog-backend/internal/services/logger"
 	"github.com/shevchenkobn/blog-backend/internal/services/onexit"
+	"github.com/shevchenkobn/blog-backend/internal/services/openapi"
 	"github.com/shevchenkobn/blog-backend/internal/types"
 )
+
+var server *openapi.Server
+func GetServer() *openapi.Server {
+	if server == nil {
+		server = openapi.NewServer(GetConfig(), GetExitHandler(), GetLogger())
+	}
+	return server
+}
 
 var postRepository repository.Posts
 func GetPostRepository() repository.Posts {

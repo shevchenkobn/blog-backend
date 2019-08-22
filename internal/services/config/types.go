@@ -5,6 +5,7 @@ import "github.com/spf13/viper"
 type Config interface {
 	Servers() []ServerConfig
 	Db() DbConfig
+	OpenApi() OpenApiConfig
 }
 type ServerConfig interface {
 	Host() string
@@ -17,20 +18,27 @@ type DbConfig interface {
 	User() string
 	Password() string
 }
+type OpenApiConfig interface {
+	ConfigPath() string
+}
 
 type config struct {
-	ServersField []serverConfig `mapstructure:"servers"`
-	DbField      dbConfig       `mapstructure:"db"`
+	ServersField []*serverConfig `mapstructure:"servers"`
+	DbField      *dbConfig       `mapstructure:"db"`
+	OpenApiField *openApiConfig `mapstructure:"openapi"`
 }
 func (c *config) Servers() []ServerConfig {
 	returnServers := make([]ServerConfig, len(c.ServersField), len(c.ServersField))
 	for i, server := range c.ServersField {
-		returnServers[i] = &server
+		returnServers[i] = server
 	}
 	return returnServers
 }
 func (c *config) Db() DbConfig {
-	return &c.DbField
+	return c.DbField
+}
+func (c *config) OpenApi() OpenApiConfig {
+	return c.OpenApiField
 }
 
 type serverConfig struct {
@@ -65,6 +73,13 @@ func (c *dbConfig) User() string {
 }
 func (c *dbConfig) Password() string {
 	return c.PasswordField
+}
+
+type openApiConfig struct {
+	ConfigPathField string `mapstructure:"configPath"`
+}
+func (c *openApiConfig) ConfigPath() string {
+	return c.ConfigPathField
 }
 
 func newConfig(viper *viper.Viper) (Config, error) {

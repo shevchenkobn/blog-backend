@@ -3,6 +3,8 @@ module github.com/shevchenkobn/blog-backend
 go 1.12
 
 require (
+	github.com/MNFGroup/openapimux v0.0.0-20190627225137-961128b764cf
+	github.com/getkin/kin-openapi v0.2.0 // indirect
 	github.com/go-pg/pg v8.0.5+incompatible
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect

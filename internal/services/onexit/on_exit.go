@@ -59,8 +59,8 @@ func (handler *ExitHandler) StartListeningToSignals() bool {
 	}
 	go func() {
 		sig := <-handler.sigs
-		handler.logger.Printf("Got signal %v. Exiting...", sig)
-		handler.runExitCallbacks(0)
+		handler.logger.Printf("Got signal %v. Tidying up and exiting...", sig)
+		handler.runExitCallbacks(true)
 	}()
 	handler.isListeningToSignals = true
 	return true
@@ -76,12 +76,14 @@ func (handler *ExitHandler) StopListeningToSignals() bool {
 
 func (handler *ExitHandler) RecoverOrExit() {
 	if !handler.isRecovering {
-		handler.runExitCallbacks(0)
+		handler.runExitCallbacks(true)
+		os.Exit(0)
 		return
 	}
 	if err := recover(); err != nil {
-		handler.logger.Errorf("Panic handled! %v. Exiting...", err)
-		handler.runExitCallbacks(1)
+		handler.logger.Errorf("Panic handled! %v. Tidying up and panicking again...", err)
+		handler.runExitCallbacks(false)
+		panic(err)
 	}
 }
 
@@ -93,9 +95,11 @@ func (handler *ExitHandler) RemoveCallback(callback types.ExitHandlerCallback) {
 	handler.registeredCallbacks = util.RemoveCallbackOnOrder(handler.registeredCallbacks, callback)
 }
 
-func (handler *ExitHandler) runExitCallbacks(code int) {
+func (handler *ExitHandler) runExitCallbacks(shouldExit bool) {
 	for _, callback := range handler.registeredCallbacks {
 		callback()
 	}
-	os.Exit(code)
+	if shouldExit {
+		os.Exit(0)
+	}
 }
