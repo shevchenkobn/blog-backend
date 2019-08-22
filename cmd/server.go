@@ -20,7 +20,7 @@ func main() {
 	if err != nil {
 		fmt.Println("uuid", err)
 	}
-	fmt.Println(posts.DeleteOne(postId, true))
+	fmt.Println(posts.DeleteOne(postId, false))
 	p, err := posts.CreateOne(&models.PostSeed{
 		PostId: postId,
 		AuthorName: "author",
@@ -28,13 +28,15 @@ func main() {
 	})
 	fmt.Println(p, err)
 	commentId, err := uuid.FromString("8ae6f245-be64-4500-a6e1-85bc9ef43e44")
-	fmt.Println(comments.DeleteOne(commentId, true))
+	fmt.Println(comments.DeleteOne(commentId, false))
 	fmt.Println(comments.CreateOne(&models.CommentSeed{
 		CommentId: commentId,
 		Post: p,
 		Content: "comment",
 		AuthorName: "authorCO",
 	}))
-	fmt.Println(posts.GetAll())
-	fmt.Println(comments.GetAllForPost(postId))
+	ps, err := posts.GetAll()
+	fmt.Println(ps, err)
+	c, err := comments.GetAllForPost(postId)
+	fmt.Println(c, err)
 }

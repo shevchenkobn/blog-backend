@@ -15,11 +15,13 @@ import (
 type comment struct {
 	CommentIdField   uuid.UUID `sql:"comment_id,pk,type:uuid,use_zero"`
 	AuthorNameField  string    `sql:"author_name,notnull"`
-	PostId           uuid.UUID `sql:"post_id,type:uuid,notnull"`
-	Post             *post
+	PostId           uuid.UUID `sql:"parent_post_id,type:uuid,notnull,on_delete:CASCADE"`
+	PostField        *post     `pg:"fk:parent_post_id"`
 	ContentField     string    `sql:"content,notnull"`
 	CommentedAtField time.Time `sql:"posted_at,default:(now() at time zone 'utc'),"` // FIXME: change to now
 }
+const commentPK = "comment_id"
+const postFK = "parent_post_id"
 func (p *comment) CommentId() uuid.UUID {
 	return p.CommentIdField
 }
@@ -29,8 +31,8 @@ func (p *comment) AuthorName() string {
 func (p *comment) SetAuthorName(author string) {
 	p.AuthorNameField = author
 }
-func (p *comment) GetPost() models.Post {
-	return p.Post
+func (p *comment) Post() models.Post {
+	return p.PostField
 }
 func (p *comment) Content() string {
 	return p.AuthorNameField
@@ -63,7 +65,7 @@ func newComment(seed *models.CommentSeed) (*comment, error) {
 		c.CommentIdField = seed.CommentId
 	}
 	c.AuthorNameField = seed.AuthorName
-	c.Post = post
+	c.PostId = post.PostIdField
 	c.ContentField = seed.Content
 	if c.CommentedAtField == util.ZeroTime {
 		c.CommentedAtField = time.Now()
@@ -91,7 +93,7 @@ func NewCommentRepository(db *db.PostgreDB) *CommentRepository {
 
 func (r *CommentRepository) GetAllForPost(postId uuid.UUID) ([]models.Comment, error) {
 	var comments []comment
-	err := r.db.Db().Model(&comments).Where("post_id = ?", postId).Select()
+	err := r.db.Db().Model(&comments).Where(postFK + " = ?", postId).Select()
 	if err != nil {
 		return nil, err
 	}

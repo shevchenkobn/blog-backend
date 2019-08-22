@@ -17,8 +17,9 @@ type post struct {
 	AuthorNameField string    `sql:"author_name,notnull"`
 	ContentField    string    `sql:"content,notnull"`
 	PostedAtField   time.Time `sql:"posted_at,default:(now() at time zone 'utc')"` // FIXME: change to now
-	Comments        []comment `sql:"on_delete:CASCADE"`
+	CommentsField   []comment `pg:"fk:parent_post_id"`
 }
+const post_PK = "post_id"
 func (p *post) PostId() uuid.UUID {
 	return p.PostIdField
 }
@@ -37,8 +38,8 @@ func (p *post) SetContent(content string) {
 func (p *post) PostedAt() time.Time {
 	return p.PostedAtField
 }
-func (p *post) GetComments() []models.Comment {
-	return toInterface(p.Comments)
+func (p *post) Comments() []models.Comment {
+	return toInterface(p.CommentsField)
 }
 func newPost(seed *models.PostSeed) (*post, error) {
 	p := new(post)
@@ -59,7 +60,7 @@ func newPost(seed *models.PostSeed) (*post, error) {
 	if seed.PostedAt == util.ZeroTime {
 		p.PostedAtField = time.Now()
 	}
-	p.Comments = make([]comment, 0, 1)
+	p.CommentsField = make([]comment, 0, 1)
 	return p, nil
 }
 var zeroPost = &post{}

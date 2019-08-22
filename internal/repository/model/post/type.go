@@ -6,7 +6,7 @@ import (
 )
 
 //type Constructor interface {
-//	NewPost(seed *PostSeed) Post
+//	NewPost(seed *PostSeed) PostField
 //}
 func SameIds(first models.Post, second models.Post) bool {
 	return first == models.Post(nil) && second == models.Post(nil) || uuid.Equal(first.PostId(), second.PostId())
