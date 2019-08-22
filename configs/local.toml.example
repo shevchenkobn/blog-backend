@@ -1,6 +1,7 @@
 # Create local.EXT files, where EXT is JSON, TOML, YAML, HCL, env or properties to overried values from default.
 # All configs must be located in either $(pwd)/configs or $(pwd)
 # TOML is recommended for overrides because it provides functionality of YAML and console friendliness of INI format
+# WARNING! v0.4 is only supported
 
 # You can override only specific properties, not whole objects.
 # Possible overrides:

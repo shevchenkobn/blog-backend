@@ -19,6 +19,11 @@ func (p *PostgreDB) Db() *pg.DB {
 	return p.db
 }
 
+func (p *PostgreDB) Test() error {
+	_, err := p.db.Exec("SELECT 1;")
+	return err
+}
+
 func (p *PostgreDB) Close() {
 	err := p.db.Close()
 	if err != nil {

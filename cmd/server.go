@@ -2,19 +2,17 @@ package main
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/shevchenkobn/blog-backend/internal/di"
+	"github.com/shevchenkobn/blog-backend/internal/util"
 )
 
 func main() {
 	// Start handling exits
 	exitHandler := di.GetExitHandler()
 	exitHandler.StartListeningToSignals()
-	defer exitHandler.Recover()
+	//defer exitHandler.RecoverOrExit()
 
-	connection := di.GetPostgreDB()
-	time.Sleep(5000)
-	fmt.Println(connection)
-	select {}
+	posts, comments := di.GetPostRepository(), di.GetCommentRepository()
+	fmt.Println(posts.GetAll())
+	fmt.Println(comments.GetAllForPost(util.ZeroUuid))
 }

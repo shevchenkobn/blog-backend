@@ -1,15 +1,30 @@
 package di
 
 import (
-	"os"
-	"syscall"
-
+	"github.com/shevchenkobn/blog-backend/internal/repository"
 	"github.com/shevchenkobn/blog-backend/internal/services/config"
 	"github.com/shevchenkobn/blog-backend/internal/services/db"
+	"github.com/shevchenkobn/blog-backend/internal/services/db/pg"
 	"github.com/shevchenkobn/blog-backend/internal/services/logger"
 	"github.com/shevchenkobn/blog-backend/internal/services/onexit"
 	"github.com/shevchenkobn/blog-backend/internal/types"
 )
+
+var postRepository repository.Posts
+func GetPostRepository() repository.Posts {
+	if postRepository == nil {
+		postRepository = pg.NewPostRepository(GetPostgreDB())
+	}
+	return postRepository
+}
+
+var commentRepository repository.Comments
+func GetCommentRepository() repository.Comments {
+	if commentRepository == nil {
+		commentRepository = pg.NewCommentRepository(GetPostgreDB())
+	}
+	return commentRepository
+}
 
 var postgreDb *db.PostgreDB
 func GetPostgreDB() *db.PostgreDB {
@@ -30,14 +45,9 @@ func GetConfig() config.Config {
 var exitHandler types.ExitHandler
 func GetExitHandler() types.ExitHandler {
 	if exitHandler == nil {
-		exitHandler = onexit.NewExitHandler(GetLogger(), GetExitSignals())
+		exitHandler = onexit.NewExitHandler(GetLogger())
 	}
 	return exitHandler
-}
-
-var exitSignals = []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP}
-func GetExitSignals() []os.Signal {
-	return exitSignals
 }
 
 var l *logger.Logger

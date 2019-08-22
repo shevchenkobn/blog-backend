@@ -4,11 +4,18 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"syscall"
 
 	"github.com/shevchenkobn/blog-backend/internal/services/logger"
 	"github.com/shevchenkobn/blog-backend/internal/types"
 	"github.com/shevchenkobn/blog-backend/internal/util"
 )
+
+// readonly
+var exitSignals = []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP}
+func GetExitSignals() []os.Signal {
+	return exitSignals
+}
 
 type ExitHandler struct {
 	registeredCallbacks  []types.ExitHandlerCallback
@@ -29,11 +36,11 @@ func (handler *ExitHandler) SetRecovering(value bool) {
 	handler.isRecovering = value
 }
 
-func NewExitHandler(l *logger.Logger, signals []os.Signal) types.ExitHandler {
+func NewExitHandler(l *logger.Logger) types.ExitHandler {
 	handler := new(ExitHandler)
 	handler.isWindows = runtime.GOOS == "windows"
 	handler.logger = l
-	handler.signals = signals
+	handler.signals = GetExitSignals()
 	handler.registeredCallbacks = make([]types.ExitHandlerCallback, 0, 4)
 	handler.isListeningToSignals = false
 	handler.isRecovering = true
@@ -67,8 +74,9 @@ func (handler *ExitHandler) StopListeningToSignals() bool {
 	return true
 }
 
-func (handler *ExitHandler) Recover() {
+func (handler *ExitHandler) RecoverOrExit() {
 	if !handler.isRecovering {
+		handler.runExitCallbacks(0)
 		return
 	}
 	if err := recover(); err != nil {

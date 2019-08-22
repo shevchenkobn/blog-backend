@@ -9,7 +9,7 @@ type ExitHandler interface {
 
 	StartListeningToSignals() bool
 	StopListeningToSignals() bool
-	Recover()
+	RecoverOrExit()
 	AddCallback(callback ExitHandlerCallback)
 	RemoveCallback(callback ExitHandlerCallback)
 }
