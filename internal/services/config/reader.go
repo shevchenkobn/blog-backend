@@ -8,6 +8,7 @@ import (
 
 const DefaultConfigFileName = "default"
 const OverrideConfigFileName = "local"
+
 func GetConfigLocations() [2]string {
 	dir, err := os.Getwd()
 	if err != nil {

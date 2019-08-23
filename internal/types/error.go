@@ -2,18 +2,19 @@ package types
 
 import (
 	"encoding/json"
-	"net/http"
-
-	"github.com/shevchenkobn/blog-backend/internal/services/logger"
-	"github.com/shevchenkobn/blog-backend/internal/util"
 )
 
 type ErrorCode string
+
 const (
+	ErrorOpenApi = "OPENAPI"
+
 	ErrorPostDuplicateId = "POST_ID_DUPLICATE"
+	ErrorPostNotFound    = "POST_NOT_FOUND"
 
 	ErrorCommentDuplicateId   = "COMMENT_ID_DUPLICATE"
 	ErrorCommentInvalidBlogId = "COMMENT_BLOG_ID_INVALID"
+	ErrorCommentNotFound      = "COMMENT_NOT_FOUND"
 
 	ErrorNotFound = "NOT_FOUND"
 
@@ -36,8 +37,8 @@ func NewLogicErrorWithMessage(code ErrorCode, message string) LogicError {
 }
 
 type logicError struct {
-	CodeField ErrorCode `json:"code"`
-	MessageField string `json:"message,omitempty"`
+	CodeField    ErrorCode `json:"code"`
+	MessageField string    `json:"message,omitempty"`
 }
 
 func (e *logicError) Error() string {
@@ -54,15 +55,6 @@ func (e *logicError) Message() string {
 
 func (e *logicError) ToJson() ([]byte, error) {
 	return json.Marshal(e)
-}
-
-func SendLogicError(w http.ResponseWriter, logger *logger.Logger, code int, err LogicError) {
-	bytes, e := err.ToJson()
-	if e != nil {
-		util.SendResponse(w, logger, http.StatusInternalServerError, GetServerFailureError())
-	} else {
-		util.SendResponse(w, logger, code, bytes)
-	}
 }
 
 func GetServerFailureError() []byte {

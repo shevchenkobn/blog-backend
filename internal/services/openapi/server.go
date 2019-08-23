@@ -3,6 +3,7 @@ package openapi
 import (
 	"context"
 	"github.com/MNFGroup/openapimux"
+	"github.com/shevchenkobn/blog-backend/internal/util"
 	"net/http"
 	"strconv"
 	"sync"
@@ -15,14 +16,15 @@ import (
 )
 
 type Server struct {
-	config []config.ServerConfig
-	r *openapimux.OpenAPIMux
-	servers []*http.Server
-	wg *sync.WaitGroup
-	exitHandler types.ExitHandler
+	config       []config.ServerConfig
+	r            *openapimux.OpenAPIMux
+	servers      []*http.Server
+	wg           *sync.WaitGroup
+	exitHandler  types.ExitHandler
 	exitCallback types.ExitHandlerCallback
-	logger *logger.Logger
+	logger       *logger.Logger
 }
+
 func (s *Server) ListenAndWait() {
 	s.servers = make([]*http.Server, 0, len(s.config))
 	s.wg = &sync.WaitGroup{}
@@ -71,24 +73,26 @@ func NewServer(config config.Config, handlers map[string]http.Handler, exitHandl
 	r.UseHandlers(handlers)
 	r.UseMiddleware(
 		ErrorHandler(logger),
-		middleware.SetHeader(http.CanonicalHeaderKey("content-type"), "application/json"),
+		middleware.SetHeader(http.CanonicalHeaderKey("content-type"), "application/json; charset=utf-8"),
 	)
-	r.ErrorHandler = func(w http.ResponseWriter, r *http.Request, data string, code int) {
-		switch data {
-		case "Path not found":
-			types.SendLogicError(w, logger, http.StatusNotFound, types.NewLogicError(types.ErrorNotFound))
-		case "Handler not found":
-			logger.Errorf("Handler not found: %s", r.URL.String())
-			types.SendLogicError(w, logger, http.StatusInternalServerError, types.NewLogicError(types.ErrorServer))
-		default:
-			types.SendLogicError(w, logger, http.StatusBadRequest, types.NewLogicErrorWithMessage(types.ErrorServer, data))
-		}
-	}
 
 	server := new(Server)
+	r.ErrorHandler = server.errorHandler
 	server.config = config.Servers()
 	server.r = r
 	server.exitHandler = exitHandler
 	server.logger = logger
 	return server
+}
+
+func (s *Server) errorHandler(w http.ResponseWriter, r *http.Request, data string, code int) {
+	switch data {
+	case "Path not found":
+		util.SendLogicError(w, s.logger, http.StatusNotFound, types.NewLogicError(types.ErrorNotFound))
+	case "Handler not found":
+		s.logger.Errorf("Handler not found: %s", r.URL.String())
+		util.SendLogicError(w, s.logger, http.StatusInternalServerError, types.NewLogicError(types.ErrorServer))
+	default:
+		util.SendLogicError(w, s.logger, http.StatusBadRequest, types.NewLogicErrorWithMessage(types.ErrorOpenApi, data))
+	}
 }

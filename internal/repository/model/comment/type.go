@@ -5,11 +5,9 @@ import (
 	"github.com/shevchenkobn/blog-backend/internal/repository/model"
 )
 
-type JsonEncoder func (post models.Comment) ([]byte, error)
-type SliceJsonEncoder func (post []models.Comment) ([]byte, error)
-//type Constructor interface {
-//	NewComment(seed *CommentSeed) Comment
-//}
+type JsonEncoder func(post models.Comment) ([]byte, error)
+type SliceJsonEncoder func(post []models.Comment) ([]byte, error)
+
 func SameIds(first models.Comment, second models.Comment) bool {
 	return first == models.Comment(nil) && second == models.Comment(nil) || uuid.Equal(first.CommentId(), second.CommentId())
 }

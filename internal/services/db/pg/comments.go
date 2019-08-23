@@ -23,8 +23,10 @@ type comment struct {
 	ContentField     string    `sql:"content,notnull" json:"content"`
 	CommentedAtField time.Time `sql:"posted_at,default:(now() at time zone 'utc')," json:"commentedAt"`
 }
+
 const commentPK = "comment_id"
 const postFK = "parent_post_id"
+
 func (p *comment) CommentId() uuid.UUID {
 	return p.CommentIdField
 }
@@ -73,7 +75,7 @@ func newComment(seed *models.CommentSeed) (*comment, error) {
 		return nil, &repository.ModelError{Code: commentm.ContentRequired}
 	}
 
-	if c.CommentIdField == util.ZeroUuid {
+	if seed.CommentId == util.ZeroUuid {
 		c.CommentIdField = uuid.NewV4()
 	} else {
 		c.CommentIdField = seed.CommentId
@@ -87,6 +89,8 @@ func newComment(seed *models.CommentSeed) (*comment, error) {
 	c.ContentField = seed.Content
 	if c.CommentedAtField == util.ZeroTime {
 		c.CommentedAtField = time.Now()
+	} else {
+		c.CommentedAtField = seed.CommentedAt
 	}
 	return c, nil
 }
@@ -96,6 +100,7 @@ func CommentToJson(post models.Comment) ([]byte, error) {
 func CommentsToJson(posts []models.Comment) ([]byte, error) {
 	return json.Marshal(posts)
 }
+
 var zeroComment = &comment{}
 
 type CommentRepository struct {
@@ -107,7 +112,7 @@ func NewCommentRepository(db *db.PostgreDB) *CommentRepository {
 	r.db = db
 	err := r.db.Db().CreateTable(zeroComment, &orm.CreateTableOptions{
 		FKConstraints: true,
-		IfNotExists: true,
+		IfNotExists:   true,
 	})
 	if err != nil {
 		panic(err)
@@ -116,12 +121,24 @@ func NewCommentRepository(db *db.PostgreDB) *CommentRepository {
 }
 
 func (r *CommentRepository) GetAllForPost(postId uuid.UUID) ([]models.Comment, error) {
-	var comments []comment
-	err := r.db.Db().Model(&comments).Where(postFK + " = ?", postId).Select()
+	var comments []*comment
+	err := r.db.Db().Model(&comments).Where(postFK+" = ?", postId).Select()
 	if err != nil {
 		return nil, err
 	}
 	return toInterface(comments), nil
+}
+
+func (r *CommentRepository) GetOne(commentId uuid.UUID) (models.Comment, error) {
+	var c = &comment{}
+	err := r.db.Db().Model(c).Where(commentPK+" = ?", commentId).Select()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, types.NewLogicError(types.ErrorCommentNotFound)
+		}
+		return nil, err
+	}
+	return c, nil
 }
 
 func (r *CommentRepository) CreateOne(comment *models.CommentSeed) (models.Comment, error) {
@@ -149,16 +166,19 @@ func (r *CommentRepository) CreateOne(comment *models.CommentSeed) (models.Comme
 
 func (r *CommentRepository) DeleteOne(commentId uuid.UUID, returning bool) (models.Comment, error) {
 	c := &comment{}
-	q := r.db.Db().Model(c).Where("comment_id = ?", commentId)
+	q := r.db.Db().Model(c).Where(commentPK+" = ?", commentId)
 	if returning {
 		q = q.Returning("*")
 	}
-	_, err := q.Delete()
+	result, err := q.Delete()
 	if err != nil {
 		if err == pg.ErrNoRows {
-			return nil, types.NewLogicError(types.ErrorNotFound)
+			return nil, types.NewLogicError(types.ErrorCommentNotFound)
 		}
 		return nil, err
+	}
+	if result.RowsAffected() == 0 {
+		return nil, types.NewLogicError(types.ErrorCommentNotFound)
 	}
 	if returning {
 		return c, nil
@@ -167,10 +187,10 @@ func (r *CommentRepository) DeleteOne(commentId uuid.UUID, returning bool) (mode
 	}
 }
 
-func toInterface(comments []comment) []models.Comment {
+func toInterface(comments []*comment) []models.Comment {
 	var commentsByInterface = make([]models.Comment, len(comments))
 	for i, c := range comments {
-		commentsByInterface[i] = &c
+		commentsByInterface[i] = c
 	}
 	return commentsByInterface
 }

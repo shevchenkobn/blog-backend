@@ -25,8 +25,9 @@ type OpenApiConfig interface {
 type config struct {
 	ServersField []*serverConfig `mapstructure:"servers"`
 	DbField      *dbConfig       `mapstructure:"db"`
-	OpenApiField *openApiConfig `mapstructure:"openapi"`
+	OpenApiField *openApiConfig  `mapstructure:"openapi"`
 }
+
 func (c *config) Servers() []ServerConfig {
 	returnServers := make([]ServerConfig, len(c.ServersField), len(c.ServersField))
 	for i, server := range c.ServersField {
@@ -42,9 +43,10 @@ func (c *config) OpenApi() OpenApiConfig {
 }
 
 type serverConfig struct {
-	 HostField string `mapstructure:"host"`
-	 PortField int    `mapstructure:"port"`
+	HostField string `mapstructure:"host"`
+	PortField int    `mapstructure:"port"`
 }
+
 func (c *serverConfig) Host() string {
 	return c.HostField
 }
@@ -59,6 +61,7 @@ type dbConfig struct {
 	UserField     string `mapstructure:"user"`
 	PasswordField string `mapstructure:"password"`
 }
+
 func (c *dbConfig) Host() string {
 	return c.HostField
 }
@@ -78,6 +81,7 @@ func (c *dbConfig) Password() string {
 type openApiConfig struct {
 	ConfigPathField string `mapstructure:"configPath"`
 }
+
 func (c *openApiConfig) ConfigPath() string {
 	return c.ConfigPathField
 }

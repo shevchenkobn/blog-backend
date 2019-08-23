@@ -16,13 +16,15 @@ import (
 )
 
 type post struct {
-	PostIdField     uuid.UUID `sql:"post_id,type:uuid,pk,use_zero" json:"postId"`
-	AuthorNameField string    `sql:"author_name,notnull" json:"authorName"`
-	ContentField    string    `sql:"content,notnull" json:"content"`
-	PostedAtField   time.Time `sql:"posted_at,default:(now() at time zone 'utc')" json:"postedAt"`
-	CommentsField   []comment `pg:"fk:parent_post_id" json:"-"`
+	PostIdField     uuid.UUID  `sql:"post_id,type:uuid,pk,use_zero" json:"postId"`
+	AuthorNameField string     `sql:"author_name,notnull" json:"authorName"`
+	ContentField    string     `sql:"content,notnull" json:"content"`
+	PostedAtField   time.Time  `sql:"posted_at,default:(now() at time zone 'utc')" json:"postedAt"`
+	CommentsField   []*comment `pg:"fk:parent_post_id" json:"-"`
 }
-const post_PK = "post_id"
+
+const postPK = "post_id"
+
 func (p *post) PostId() uuid.UUID {
 	return p.PostIdField
 }
@@ -62,8 +64,10 @@ func newPost(seed *models.PostSeed) (*post, error) {
 	p.ContentField = seed.Content
 	if seed.PostedAt == util.ZeroTime {
 		p.PostedAtField = time.Now()
+	} else {
+		p.PostedAtField = seed.PostedAt
 	}
-	p.CommentsField = make([]comment, 0, 1)
+	p.CommentsField = make([]*comment, 0, 1)
 	return p, nil
 }
 func PostToJson(post models.Post) ([]byte, error) {
@@ -72,6 +76,7 @@ func PostToJson(post models.Post) ([]byte, error) {
 func PostsToJson(posts []models.Post) ([]byte, error) {
 	return json.Marshal(posts)
 }
+
 var zeroPost = &post{}
 
 type PostRepository struct {
@@ -83,7 +88,7 @@ func NewPostRepository(db *db.PostgreDB) *PostRepository {
 	r.db = db
 	err := r.db.Db().CreateTable(zeroPost, &orm.CreateTableOptions{
 		FKConstraints: true,
-		IfNotExists: true,
+		IfNotExists:   true,
 	})
 	if err != nil {
 		panic(err)
@@ -92,16 +97,28 @@ func NewPostRepository(db *db.PostgreDB) *PostRepository {
 }
 
 func (r *PostRepository) GetAll() ([]models.Post, error) {
-	var posts []post
+	var posts []*post
 	err := r.db.Db().Model(&posts).Select()
 	if err != nil {
 		return nil, err
 	}
 	var postsByInterface = make([]models.Post, len(posts))
 	for i, p := range posts {
-		postsByInterface[i] = &p
+		postsByInterface[i] = p
 	}
 	return postsByInterface, err
+}
+
+func (r *PostRepository) GetOne(postId uuid.UUID) (models.Post, error) {
+	var p = &post{}
+	err := r.db.Db().Model(p).Where(postPK+" = ?", postId).Select()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, types.NewLogicError(types.ErrorPostNotFound)
+		}
+		return nil, err
+	}
+	return p, nil
 }
 
 func (r *PostRepository) CreateOne(post *models.PostSeed) (models.Post, error) {
@@ -123,16 +140,19 @@ func (r *PostRepository) CreateOne(post *models.PostSeed) (models.Post, error) {
 
 func (r *PostRepository) DeleteOne(postId uuid.UUID, returning bool) (models.Post, error) {
 	c := &post{}
-	q := r.db.Db().Model(c).Where("post_id = ?", postId)
+	q := r.db.Db().Model(c).Where(postPK+" = ?", postId)
 	if returning {
 		q = q.Returning("*")
 	}
-	_, err := q.Delete()
+	result, err := q.Delete()
 	if err != nil {
 		if err == pg.ErrNoRows {
-			return nil, types.NewLogicError(types.ErrorNotFound)
+			return nil, types.NewLogicError(types.ErrorPostNotFound)
 		}
 		return nil, err
+	}
+	if result.RowsAffected() == 0 {
+		return nil, types.NewLogicError(types.ErrorPostNotFound)
 	}
 	if returning {
 		return c, nil

@@ -67,13 +67,10 @@ components:
     CommentSeed:
       type: object
       required:
-        - postId
         - authorName
         - content
       properties:
         commentId:
-          $ref: '#/components/schemas/Uuid'
-        postId:
           $ref: '#/components/schemas/Uuid'
         authorName:
           $ref: '#/components/schemas/AuthorName'
@@ -170,6 +167,18 @@ paths:
   /posts/{postId}/comments:
     parameters:
       - $ref: '#/components/parameters/PostIdPath'
+    get:
+      tags: ['comments']
+      operationId: GetCommentsForPost
+      responses:
+        200:
+          description: Comment list for post
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
     post:
       tags: ['comments']
       operationId: CreateOneComment
@@ -186,18 +195,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Comment'
-    get:
-      tags: ['comments']
-      operationId: GetCommentsForPost
-      responses:
-        200:
-          description: Comment list for post
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Comment'
   /comments/{commentId}:
     parameters:
       - $ref: '#/components/parameters/CommentIdPath'

@@ -13,6 +13,7 @@ import (
 
 // readonly
 var exitSignals = []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP}
+
 func GetExitSignals() []os.Signal {
 	return exitSignals
 }
@@ -24,8 +25,9 @@ type ExitHandler struct {
 	isWindows            bool
 	sigs                 chan os.Signal
 	isListeningToSignals bool
-	isRecovering bool
+	isRecovering         bool
 }
+
 func (handler *ExitHandler) IsListeningToSignals() bool {
 	return handler.isListeningToSignals
 }

@@ -17,6 +17,7 @@ import (
 )
 
 var server *openapi.Server
+
 func GetServer() *openapi.Server {
 	if server == nil {
 		server = openapi.NewServer(GetConfig(), GetHttpHandlers(), GetExitHandler(), GetLogger())
@@ -26,7 +27,13 @@ func GetServer() *openapi.Server {
 
 func GetHttpHandlers() map[string]http.Handler {
 	return map[string]http.Handler{
-		"GetPosts": handlers.NewGetPosts(GetPostRepository(), GetPostSliceJsonEncoder(), GetLogger()),
+		"GetPosts":      handlers.NewGetPosts(GetPostRepository(), GetPostSliceJsonEncoder(), GetLogger()),
+		"CreateOnePost": handlers.NewCreateOnePost(GetPostRepository(), GetPostJsonEncoder(), GetLogger()),
+		"DeleteOnePost": handlers.NewDeleteOnePost(GetPostRepository(), GetLogger()),
+
+		"GetCommentsForPost": handlers.NewGetCommentsForPost(GetCommentRepository(), GetPostRepository(), GetCommentSliceJsonEncoder(), GetLogger()),
+		"CreateOneComment":   handlers.NewCreateOneComment(GetCommentRepository(), GetCommentJsonEncoder(), GetLogger()),
+		"DeleteOneComment":   handlers.NewDeleteOneComment(GetCommentRepository(), GetLogger()),
 	}
 }
 
@@ -45,6 +52,7 @@ func GetCommentSliceJsonEncoder() comment.SliceJsonEncoder {
 }
 
 var postRepository repository.Posts
+
 func GetPostRepository() repository.Posts {
 	if postRepository == nil {
 		postRepository = pg.NewPostRepository(GetPostgreDB())
@@ -53,6 +61,7 @@ func GetPostRepository() repository.Posts {
 }
 
 var commentRepository repository.Comments
+
 func GetCommentRepository() repository.Comments {
 	if commentRepository == nil {
 		commentRepository = pg.NewCommentRepository(GetPostgreDB())
@@ -61,6 +70,7 @@ func GetCommentRepository() repository.Comments {
 }
 
 var postgreDb *db.PostgreDB
+
 func GetPostgreDB() *db.PostgreDB {
 	if postgreDb == nil {
 		postgreDb = db.NewPostgreDB(GetConfig(), GetExitHandler(), GetLogger())
@@ -69,6 +79,7 @@ func GetPostgreDB() *db.PostgreDB {
 }
 
 var cachedConfig config.Config
+
 func GetConfig() config.Config {
 	if cachedConfig == nil {
 		cachedConfig = config.GetConfig()
@@ -77,6 +88,7 @@ func GetConfig() config.Config {
 }
 
 var exitHandler types.ExitHandler
+
 func GetExitHandler() types.ExitHandler {
 	if exitHandler == nil {
 		exitHandler = onexit.NewExitHandler(GetLogger())
@@ -85,6 +97,7 @@ func GetExitHandler() types.ExitHandler {
 }
 
 var l *logger.Logger
+
 func GetLogger() *logger.Logger {
 	if l == nil {
 		l = logger.NewLogger()

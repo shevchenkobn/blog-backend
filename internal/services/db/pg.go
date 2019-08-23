@@ -10,11 +10,12 @@ import (
 )
 
 type PostgreDB struct {
-	db *pg.DB
-	logger *logger.Logger
-	onExit types.ExitHandler
+	db       *pg.DB
+	logger   *logger.Logger
+	onExit   types.ExitHandler
 	callback types.ExitHandlerCallback
 }
+
 func (p *PostgreDB) Db() *pg.DB {
 	return p.db
 }
@@ -34,9 +35,9 @@ func (p *PostgreDB) Close() {
 
 func NewPostgreDB(config config.Config, onExit types.ExitHandler, l *logger.Logger) *PostgreDB {
 	connectConfig := &pg.Options{
-		Addr: fmt.Sprintf("%s:%d", config.Db().Host(), config.Db().Port()),
+		Addr:     fmt.Sprintf("%s:%d", config.Db().Host(), config.Db().Port()),
 		Database: config.Db().Database(),
-		User: config.Db().User(),
+		User:     config.Db().User(),
 	}
 	if user := config.Db().User(); user != "" {
 		connectConfig.User = user
@@ -45,7 +46,7 @@ func NewPostgreDB(config config.Config, onExit types.ExitHandler, l *logger.Logg
 		connectConfig.Password = password
 	}
 	p := &PostgreDB{
-		db: pg.Connect(connectConfig),
+		db:     pg.Connect(connectConfig),
 		onExit: onExit,
 		logger: l,
 	}

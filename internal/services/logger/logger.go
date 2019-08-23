@@ -5,14 +5,14 @@ import (
 	"os"
 )
 
-type Logger struct {}
+type Logger struct{}
 
 func NewLogger() *Logger {
 	return new(Logger)
 }
 
 func (l *Logger) Printf(format string, values ...interface{}) {
-	fmt.Printf(format + "\n", values...)
+	fmt.Printf(format+"\n", values...)
 }
 
 func (l *Logger) Print(values ...interface{}) {
@@ -20,7 +20,7 @@ func (l *Logger) Print(values ...interface{}) {
 }
 
 func (l *Logger) Errorf(format string, values ...interface{}) {
-	_, err := fmt.Fprintf(os.Stderr, format + "\n", values...)
+	_, err := fmt.Fprintf(os.Stderr, format+"\n", values...)
 	if err != nil {
 		printError(err)
 	}
@@ -36,5 +36,3 @@ func (l *Logger) Error(values ...interface{}) {
 func printError(err error) {
 	fmt.Printf("PRINT_ERROR: %s", err)
 }
-
-

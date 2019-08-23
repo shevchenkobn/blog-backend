@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/MNFGroup/openapimux"
-	uuid "github.com/satori/go.uuid"
 	models "github.com/shevchenkobn/blog-backend/internal/repository/model"
 	"net/http"
 
@@ -15,9 +13,10 @@ import (
 
 type GetPosts struct {
 	postRepository repository.Posts
-	postsToJson post.SliceJsonEncoder
-	logger *logger.Logger
+	postsToJson    post.SliceJsonEncoder
+	logger         *logger.Logger
 }
+
 func NewGetPosts(postRepository repository.Posts, postsToJson post.SliceJsonEncoder, logger *logger.Logger) *GetPosts {
 	ctx := new(GetPosts)
 	ctx.postRepository = postRepository
@@ -39,9 +38,10 @@ func (ctx *GetPosts) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type CreateOnePost struct {
 	postRepository repository.Posts
-	postToJson post.JsonEncoder
-	logger *logger.Logger
+	postToJson     post.JsonEncoder
+	logger         *logger.Logger
 }
+
 func NewCreateOnePost(postRepository repository.Posts, postToJson post.JsonEncoder, logger *logger.Logger) *CreateOnePost {
 	ctx := new(CreateOnePost)
 	ctx.postRepository = postRepository
@@ -51,7 +51,7 @@ func NewCreateOnePost(postRepository repository.Posts, postToJson post.JsonEncod
 }
 func (ctx *CreateOnePost) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	var postSeed *models.PostSeed
+	var postSeed = &models.PostSeed{}
 	err := decoder.Decode(postSeed)
 	if err != nil {
 		panic(err)
@@ -71,21 +71,17 @@ func (ctx *CreateOnePost) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type DeleteOnePost struct {
 	postRepository repository.Posts
-	logger *logger.Logger
+	logger         *logger.Logger
 }
-func NewDeleteOnePost(postRepository repository.Posts, postToJson post.JsonEncoder, logger *logger.Logger) *DeleteOnePost {
+
+func NewDeleteOnePost(postRepository repository.Posts, logger *logger.Logger) *DeleteOnePost {
 	ctx := new(DeleteOnePost)
 	ctx.postRepository = postRepository
 	ctx.logger = logger
 	return ctx
 }
 func (ctx *DeleteOnePost) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	postIdParam := openapimux.PathParam(r, "postId")
-	postId, err := uuid.FromString(postIdParam)
-	if err != nil {
-		panic(err)
-	}
-	_, err = ctx.postRepository.DeleteOne(postId, false)
+	_, err := ctx.postRepository.DeleteOne(util.GetUuidPathParam(r, "postId"), false)
 	if err != nil {
 		panic(err)
 	}
