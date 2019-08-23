@@ -5,6 +5,8 @@ import (
 	"github.com/shevchenkobn/blog-backend/internal/repository/model"
 )
 
+type JsonEncoder func (post models.Post) ([]byte, error)
+type SliceJsonEncoder func (post []models.Post) ([]byte, error)
 //type Constructor interface {
 //	NewPost(seed *PostSeed) PostField
 //}

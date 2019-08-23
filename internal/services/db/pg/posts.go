@@ -1,6 +1,7 @@
 package pg
 
 import (
+	"encoding/json"
 	"github.com/go-pg/pg/orm"
 	uuid "github.com/satori/go.uuid"
 	"time"
@@ -13,11 +14,11 @@ import (
 )
 
 type post struct {
-	PostIdField     uuid.UUID `sql:"post_id,type:uuid,pk,use_zero"`
-	AuthorNameField string    `sql:"author_name,notnull"`
-	ContentField    string    `sql:"content,notnull"`
-	PostedAtField   time.Time `sql:"posted_at,default:(now() at time zone 'utc')"` // FIXME: change to now
-	CommentsField   []comment `pg:"fk:parent_post_id"`
+	PostIdField     uuid.UUID `sql:"post_id,type:uuid,pk,use_zero" json:"postId"`
+	AuthorNameField string    `sql:"author_name,notnull" json:"authorName"`
+	ContentField    string    `sql:"content,notnull" json:"content"`
+	PostedAtField   time.Time `sql:"posted_at,default:(now() at time zone 'utc')" json:"postedAt"` // FIXME: change to now
+	CommentsField   []comment `pg:"fk:parent_post_id" json:"-"`
 }
 const post_PK = "post_id"
 func (p *post) PostId() uuid.UUID {
@@ -62,6 +63,12 @@ func newPost(seed *models.PostSeed) (*post, error) {
 	}
 	p.CommentsField = make([]comment, 0, 1)
 	return p, nil
+}
+func PostToJson(post models.Post) ([]byte, error) {
+	return json.Marshal(post)
+}
+func PostsToJson(posts []models.Post) ([]byte, error) {
+	return json.Marshal(posts)
 }
 var zeroPost = &post{}
 

@@ -5,21 +5,24 @@ info:
   version: v1.0
 servers:
   - url: /api/v1
+tags:
+  - name: posts
+  - name: comments
 components:
   schemas:
     Uuid:
       type: string
-      format: uuid
+      pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$
     NonEmptyString:
       type: string
       minLength: 1
     Date:
       type: string
-      format: data-time
+      format: date-time
     DateFromUser:
       type: string
       description: Default is the current date
-      format: data-time
+      format: date-time
     PostSeed:
       type: object
       required:
@@ -90,6 +93,19 @@ components:
         commentedAt:
           $ref: '#/components/schemas/Date'
       additionalProperties: false
+  parameters:
+    PostIdPath:
+      name: postId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    CommentIdPath:
+      name: postId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
   responses:
     400:
       description: Client Error
@@ -111,10 +127,14 @@ paths:
       tags: ['posts']
       operationId: CreateOnePost
       requestBody:
-        $ref: '#/components/schemas/PostSeed'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostSeed'
       responses:
         200:
-          description: Successful list of posts
+          description: Successful post
           content:
             application/json:
               schema:
@@ -123,4 +143,64 @@ paths:
                   $ref: '#/components/schemas/Post'
         400:
           $ref: '#/components/responses/400'
+
+  /posts/{postId}:
+    parameters:
+      - $ref: '#/components/parameters/PostIdPath'
+    delete:
+      tags: ['posts']
+      operationId: DeleteOnePost
+      responses:
+        200:
+          description: Deleted post
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+
+  /posts/{postId}/comments:
+    parameters:
+      - $ref: '#/components/parameters/PostIdPath'
+    post:
+      tags: ['comments']
+      operationId: CreateOneComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentSeed'
+      responses:
+        200:
+          description: Created comment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+    get:
+      tags: ['comments']
+      operationId: GetCommentsForPost
+      responses:
+        200:
+          description: Comment list for post
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+  /comments/{commentId}:
+    parameters:
+      - $ref: '#/components/parameters/CommentIdPath'
+    delete:
+      tags: ['comments']
+      operationId: DeleteOneComment
+      responses:
+        200:
+          description: Deleted comment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
 

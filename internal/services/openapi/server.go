@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/MNFGroup/openapimux"
+	"github.com/shevchenkobn/blog-backend/handlers"
 	"github.com/shevchenkobn/blog-backend/internal/services/config"
 	"github.com/shevchenkobn/blog-backend/internal/services/logger"
 	"github.com/shevchenkobn/blog-backend/internal/types"
@@ -29,7 +30,7 @@ func (s *Server) ListenAndWait() {
 		srv := &http.Server{Addr: c.Host() + ":" + strconv.Itoa(c.Port()), Handler: s.r}
 		s.servers = append(s.servers, srv)
 		go func() {
-			s.logger.Printf("Listening %s", srv.Addr)
+			s.logger.Printf("Listening to %s", srv.Addr)
 			err := srv.ListenAndServe()
 			if err != nil {
 				panic(err)
@@ -60,19 +61,13 @@ func (s *Server) Close() {
 	s.wg.Done()
 }
 
-type fooHandler struct{}
-
-func (f fooHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello")
-}
-
 func NewServer(config config.Config, exitHandler types.ExitHandler, logger *logger.Logger) *Server {
 	r, err := openapimux.NewRouter(config.OpenApi().ConfigPath())
 	if err != nil {
 		panic(err)
 	}
 	r.UseHandlers(map[string]http.Handler{
-		"getFoo": fooHandler{},
+		"GetPosts": handlers.GetPosts{},
 	})
 	r.ErrorHandler = func(w http.ResponseWriter, r *http.Request, data string, code int) {
 		w.WriteHeader(code)

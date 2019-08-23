@@ -9,6 +9,7 @@ type Comment interface {
 	CommentId() uuid.UUID
 	AuthorName() string
 	SetAuthorName(author string)
+	PostId() uuid.UUID
 	Post() Post
 	Content() string
 	SetContent(content string)

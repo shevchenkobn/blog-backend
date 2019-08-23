@@ -1,6 +1,7 @@
 package pg
 
 import (
+	"encoding/json"
 	"github.com/go-pg/pg/orm"
 	uuid "github.com/satori/go.uuid"
 	"time"
@@ -13,12 +14,12 @@ import (
 )
 
 type comment struct {
-	CommentIdField   uuid.UUID `sql:"comment_id,pk,type:uuid,use_zero"`
-	AuthorNameField  string    `sql:"author_name,notnull"`
-	PostId           uuid.UUID `sql:"parent_post_id,type:uuid,notnull,on_delete:CASCADE"`
-	PostField        *post     `pg:"fk:parent_post_id"`
-	ContentField     string    `sql:"content,notnull"`
-	CommentedAtField time.Time `sql:"posted_at,default:(now() at time zone 'utc'),"` // FIXME: change to now
+	CommentIdField   uuid.UUID `sql:"comment_id,pk,type:uuid,use_zero" json:"commentId"`
+	AuthorNameField  string    `sql:"author_name,notnull" json:"authorName"`
+	PostIdField      uuid.UUID `sql:"parent_post_id,type:uuid,notnull,on_delete:CASCADE" json:"postId"`
+	PostField        *post     `pg:"fk:parent_post_id" json:"-"`
+	ContentField     string    `sql:"content,notnull" json:"content"`
+	CommentedAtField time.Time `sql:"posted_at,default:(now() at time zone 'utc')," json:"commentedAt"` // FIXME: change to now
 }
 const commentPK = "comment_id"
 const postFK = "parent_post_id"
@@ -30,6 +31,9 @@ func (p *comment) AuthorName() string {
 }
 func (p *comment) SetAuthorName(author string) {
 	p.AuthorNameField = author
+}
+func (p *comment) PostId() uuid.UUID {
+	return p.PostIdField
 }
 func (p *comment) Post() models.Post {
 	return p.PostField
@@ -65,12 +69,18 @@ func newComment(seed *models.CommentSeed) (*comment, error) {
 		c.CommentIdField = seed.CommentId
 	}
 	c.AuthorNameField = seed.AuthorName
-	c.PostId = post.PostIdField
+	c.PostIdField = post.PostIdField
 	c.ContentField = seed.Content
 	if c.CommentedAtField == util.ZeroTime {
 		c.CommentedAtField = time.Now()
 	}
 	return c, nil
+}
+func CommentToJson(post models.Comment) ([]byte, error) {
+	return json.Marshal(post)
+}
+func CommentsToJson(posts []models.Comment) ([]byte, error) {
+	return json.Marshal(posts)
 }
 var zeroComment = &comment{}
 

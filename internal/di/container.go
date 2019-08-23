@@ -1,7 +1,10 @@
 package di
 
 import (
+	"github.com/shevchenkobn/blog-backend/handlers"
 	"github.com/shevchenkobn/blog-backend/internal/repository"
+	"github.com/shevchenkobn/blog-backend/internal/repository/model/comment"
+	"github.com/shevchenkobn/blog-backend/internal/repository/model/post"
 	"github.com/shevchenkobn/blog-backend/internal/services/config"
 	"github.com/shevchenkobn/blog-backend/internal/services/db"
 	"github.com/shevchenkobn/blog-backend/internal/services/db/pg"
@@ -17,6 +20,24 @@ func GetServer() *openapi.Server {
 		server = openapi.NewServer(GetConfig(), GetExitHandler(), GetLogger())
 	}
 	return server
+}
+
+func GetHttpHandlers() *handlers.HttpHandlers {
+	return handlers.New(GetPostRepository(), GetPostSliceJsonEncoder(), GetLogger())
+}
+
+func GetPostJsonEncoder() post.JsonEncoder {
+	return pg.PostToJson
+}
+func GetPostSliceJsonEncoder() post.SliceJsonEncoder {
+	return pg.PostsToJson
+}
+
+func GetCommentJsonEncoder() comment.JsonEncoder {
+	return pg.CommentToJson
+}
+func GetCommentSliceJsonEncoder() comment.SliceJsonEncoder {
+	return pg.CommentsToJson
 }
 
 var postRepository repository.Posts
