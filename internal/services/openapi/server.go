@@ -2,7 +2,6 @@ package openapi
 
 import (
 	"context"
-	"fmt"
 	"github.com/MNFGroup/openapimux"
 	"net/http"
 	"strconv"
@@ -71,16 +70,18 @@ func NewServer(config config.Config, handlers map[string]http.Handler, exitHandl
 	r.DetailedError = true
 	r.UseHandlers(handlers)
 	r.UseMiddleware(
+		ErrorHandler(logger),
 		middleware.SetHeader("content-type", "application/json"),
 	)
 	r.ErrorHandler = func(w http.ResponseWriter, r *http.Request, data string, code int) {
-		logger.Print("error", w, r, data, code)
-		w.WriteHeader(code)
-		if code == http.StatusInternalServerError {
-			fmt.Println("Fatal:", data)
-			w.Write([]byte("Oops"))
-		} else {
-			w.Write([]byte(data))
+		switch data {
+		case "Path not found":
+			types.SendLogicError(w, logger, http.StatusNotFound, types.NewLogicError(types.ErrorNotFound))
+		case "Handler not found":
+			logger.Errorf("Handler not found: %s", r.URL.String())
+			types.SendLogicError(w, logger, http.StatusInternalServerError, types.NewLogicError(types.ErrorServer))
+		default:
+			types.SendLogicError(w, logger, http.StatusBadRequest, types.NewLogicErrorWithMessage(types.ErrorServer, data))
 		}
 	}
 

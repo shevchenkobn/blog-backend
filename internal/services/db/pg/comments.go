@@ -116,7 +116,7 @@ func (r *CommentRepository) CreateOne(comment *models.CommentSeed) (models.Comme
 		return nil, err
 	}
 	_, err = r.db.Db().Model(c).Returning("*").Insert()
-	if err != nil {
+	if err != nil { // TODO: handle '23505' - PK
 		return nil, err
 	}
 	return c, nil
@@ -129,7 +129,7 @@ func (r *CommentRepository) DeleteOne(commentId uuid.UUID, returning bool) (mode
 		q = q.Returning("*")
 	}
 	_, err := q.Delete()
-	if err != nil {
+	if err != nil { // TODO: handle not found
 		return nil, err
 	}
 	if returning {

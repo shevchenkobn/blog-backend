@@ -23,6 +23,7 @@ func NewGetPosts(postRepository repository.Posts, postsToJson post.SliceJsonEnco
 }
 
 func (ctx *GetPosts) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	panic("asdf")
 	posts, err := ctx.postRepository.GetAll()
 	if err != nil {
 

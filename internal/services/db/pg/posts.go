@@ -108,7 +108,7 @@ func (r *PostRepository) CreateOne(post *models.PostSeed) (models.Post, error) {
 		return nil, err
 	}
 	_, err = r.db.Db().Model(p).Returning("*").Insert()
-	if err != nil {
+	if err != nil { // TODO: handle '23503' - FK, '23505' - PK
 		return nil, err
 	}
 	return p, nil
@@ -121,7 +121,7 @@ func (r *PostRepository) DeleteOne(postId uuid.UUID, returning bool) (models.Pos
 		q = q.Returning("*")
 	}
 	_, err := q.Delete()
-	if err != nil {
+	if err != nil { // TODO: handle not found
 		return nil, err
 	}
 	if returning {
