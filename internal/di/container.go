@@ -1,7 +1,9 @@
 package di
 
 import (
-	"github.com/shevchenkobn/blog-backend/handlers"
+	"net/http"
+
+	"github.com/shevchenkobn/blog-backend/internal/handlers"
 	"github.com/shevchenkobn/blog-backend/internal/repository"
 	"github.com/shevchenkobn/blog-backend/internal/repository/model/comment"
 	"github.com/shevchenkobn/blog-backend/internal/repository/model/post"
@@ -17,13 +19,15 @@ import (
 var server *openapi.Server
 func GetServer() *openapi.Server {
 	if server == nil {
-		server = openapi.NewServer(GetConfig(), GetExitHandler(), GetLogger())
+		server = openapi.NewServer(GetConfig(), GetHttpHandlers(), GetExitHandler(), GetLogger())
 	}
 	return server
 }
 
-func GetHttpHandlers() *handlers.HttpHandlers {
-	return handlers.New(GetPostRepository(), GetPostSliceJsonEncoder(), GetLogger())
+func GetHttpHandlers() map[string]http.Handler {
+	return map[string]http.Handler{
+		"GetPosts": handlers.NewGetPosts(GetPostRepository(), GetPostSliceJsonEncoder(), GetLogger()),
+	}
 }
 
 func GetPostJsonEncoder() post.JsonEncoder {

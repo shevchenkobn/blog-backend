@@ -4,13 +4,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/MNFGroup/openapimux"
-	"github.com/shevchenkobn/blog-backend/handlers"
-	"github.com/shevchenkobn/blog-backend/internal/services/config"
-	"github.com/shevchenkobn/blog-backend/internal/services/logger"
-	"github.com/shevchenkobn/blog-backend/internal/types"
 	"net/http"
 	"strconv"
 	"sync"
+
+	"github.com/go-chi/chi/middleware"
+
+	"github.com/shevchenkobn/blog-backend/internal/services/config"
+	"github.com/shevchenkobn/blog-backend/internal/services/logger"
+	"github.com/shevchenkobn/blog-backend/internal/types"
 )
 
 type Server struct {
@@ -61,15 +63,18 @@ func (s *Server) Close() {
 	s.wg.Done()
 }
 
-func NewServer(config config.Config, exitHandler types.ExitHandler, logger *logger.Logger) *Server {
+func NewServer(config config.Config, handlers map[string]http.Handler, exitHandler types.ExitHandler, logger *logger.Logger) *Server {
 	r, err := openapimux.NewRouter(config.OpenApi().ConfigPath())
 	if err != nil {
 		panic(err)
 	}
-	r.UseHandlers(map[string]http.Handler{
-		"GetPosts": handlers.GetPosts{},
-	})
+	r.DetailedError = true
+	r.UseHandlers(handlers)
+	r.UseMiddleware(
+		middleware.SetHeader("content-type", "application/json"),
+	)
 	r.ErrorHandler = func(w http.ResponseWriter, r *http.Request, data string, code int) {
+		logger.Print("error", w, r, data, code)
 		w.WriteHeader(code)
 		if code == http.StatusInternalServerError {
 			fmt.Println("Fatal:", data)
