@@ -2,8 +2,10 @@ package pg
 
 import (
 	"encoding/json"
+	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
 	uuid "github.com/satori/go.uuid"
+	"github.com/shevchenkobn/blog-backend/internal/types"
 	"time"
 
 	"github.com/shevchenkobn/blog-backend/internal/repository"
@@ -17,7 +19,7 @@ type post struct {
 	PostIdField     uuid.UUID `sql:"post_id,type:uuid,pk,use_zero" json:"postId"`
 	AuthorNameField string    `sql:"author_name,notnull" json:"authorName"`
 	ContentField    string    `sql:"content,notnull" json:"content"`
-	PostedAtField   time.Time `sql:"posted_at,default:(now() at time zone 'utc')" json:"postedAt"` // FIXME: change to now
+	PostedAtField   time.Time `sql:"posted_at,default:(now() at time zone 'utc')" json:"postedAt"`
 	CommentsField   []comment `pg:"fk:parent_post_id" json:"-"`
 }
 const post_PK = "post_id"
@@ -108,7 +110,12 @@ func (r *PostRepository) CreateOne(post *models.PostSeed) (models.Post, error) {
 		return nil, err
 	}
 	_, err = r.db.Db().Model(p).Returning("*").Insert()
-	if err != nil { // TODO: handle '23503' - FK, '23505' - PK
+	if err != nil {
+		if err, ok := err.(pg.Error); ok {
+			if err.Field('C') == "23505" {
+				return nil, types.NewLogicError(types.ErrorPostDuplicateId)
+			}
+		}
 		return nil, err
 	}
 	return p, nil
@@ -121,7 +128,10 @@ func (r *PostRepository) DeleteOne(postId uuid.UUID, returning bool) (models.Pos
 		q = q.Returning("*")
 	}
 	_, err := q.Delete()
-	if err != nil { // TODO: handle not found
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, types.NewLogicError(types.ErrorNotFound)
+		}
 		return nil, err
 	}
 	if returning {

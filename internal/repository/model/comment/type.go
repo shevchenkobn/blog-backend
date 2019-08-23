@@ -15,6 +15,7 @@ func SameIds(first models.Comment, second models.Comment) bool {
 }
 
 const PostRequired = "comment_post_required"
+const PostIdAndPostFound = "comment_post_id_and_post"
 const PostInvalidType = "comment_post_invalid_type"
 const ContentRequired = "comment_content_required"
 const AuthorNameRequired = "comment_author_name_required"

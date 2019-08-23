@@ -21,6 +21,7 @@ const (
 )
 
 type LogicError interface {
+	error
 	Code() ErrorCode
 	Message() string
 	ToJson() ([]byte, error)
@@ -37,6 +38,10 @@ func NewLogicErrorWithMessage(code ErrorCode, message string) LogicError {
 type logicError struct {
 	CodeField ErrorCode `json:"code"`
 	MessageField string `json:"message,omitempty"`
+}
+
+func (e *logicError) Error() string {
+	return "LogicError: " + string(e.Code())
 }
 
 func (e *logicError) Code() ErrorCode {

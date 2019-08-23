@@ -2,8 +2,10 @@ package pg
 
 import (
 	"encoding/json"
+	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
 	uuid "github.com/satori/go.uuid"
+	"github.com/shevchenkobn/blog-backend/internal/types"
 	"time"
 
 	"github.com/shevchenkobn/blog-backend/internal/repository"
@@ -19,7 +21,7 @@ type comment struct {
 	PostIdField      uuid.UUID `sql:"parent_post_id,type:uuid,notnull,on_delete:CASCADE" json:"postId"`
 	PostField        *post     `pg:"fk:parent_post_id" json:"-"`
 	ContentField     string    `sql:"content,notnull" json:"content"`
-	CommentedAtField time.Time `sql:"posted_at,default:(now() at time zone 'utc')," json:"commentedAt"` // FIXME: change to now
+	CommentedAtField time.Time `sql:"posted_at,default:(now() at time zone 'utc')," json:"commentedAt"`
 }
 const commentPK = "comment_id"
 const postFK = "parent_post_id"
@@ -52,12 +54,20 @@ func newComment(seed *models.CommentSeed) (*comment, error) {
 	if seed.AuthorName == "" {
 		return nil, &repository.ModelError{Code: commentm.AuthorNameRequired}
 	}
-	if seed.Post == nil {
+	zeroPostId := seed.PostId == util.ZeroUuid
+	if zeroPostId && seed.Post == nil {
 		return nil, &repository.ModelError{Code: commentm.PostRequired}
 	}
-	post, ok := seed.Post.(*post)
-	if !ok {
-		return nil, &repository.ModelError{Code: commentm.PostInvalidType}
+	if !zeroPostId && seed.Post != nil {
+		return nil, &repository.ModelError{Code: commentm.PostIdAndPostFound}
+	}
+	var p *post
+	var ok bool
+	if zeroPostId {
+		p, ok = seed.Post.(*post)
+		if !ok {
+			return nil, &repository.ModelError{Code: commentm.PostInvalidType}
+		}
 	}
 	if seed.Content == "" {
 		return nil, &repository.ModelError{Code: commentm.ContentRequired}
@@ -69,7 +79,11 @@ func newComment(seed *models.CommentSeed) (*comment, error) {
 		c.CommentIdField = seed.CommentId
 	}
 	c.AuthorNameField = seed.AuthorName
-	c.PostIdField = post.PostIdField
+	if !zeroPostId {
+		c.PostIdField = seed.PostId
+	} else {
+		c.PostIdField = p.PostIdField
+	}
 	c.ContentField = seed.Content
 	if c.CommentedAtField == util.ZeroTime {
 		c.CommentedAtField = time.Now()
@@ -116,7 +130,18 @@ func (r *CommentRepository) CreateOne(comment *models.CommentSeed) (models.Comme
 		return nil, err
 	}
 	_, err = r.db.Db().Model(c).Returning("*").Insert()
-	if err != nil { // TODO: handle '23505' - PK
+	if err != nil {
+		if err, ok := err.(pg.Error); ok {
+			switch err.Field('C') {
+			case "23505":
+				return nil, types.NewLogicError(types.ErrorCommentDuplicateId)
+			case "23503":
+				return nil, types.NewLogicError(types.ErrorCommentInvalidBlogId)
+			}
+			if err.Field('C') == "23505" {
+				return nil, types.NewLogicError(types.ErrorCommentDuplicateId)
+			}
+		}
 		return nil, err
 	}
 	return c, nil
@@ -129,7 +154,10 @@ func (r *CommentRepository) DeleteOne(commentId uuid.UUID, returning bool) (mode
 		q = q.Returning("*")
 	}
 	_, err := q.Delete()
-	if err != nil { // TODO: handle not found
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, types.NewLogicError(types.ErrorNotFound)
+		}
 		return nil, err
 	}
 	if returning {

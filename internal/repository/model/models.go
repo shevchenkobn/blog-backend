@@ -16,11 +16,12 @@ type Comment interface {
 	CommentedAt() time.Time
 }
 type CommentSeed struct {
-	CommentId   uuid.UUID
-	AuthorName  string
-	Post        Post
-	Content     string
-	CommentedAt time.Time
+	CommentId   uuid.UUID `json:"postId"`
+	AuthorName  string `json:"authorName"`
+	PostId uuid.UUID `json:"postId"`
+	Post        Post `json:"-"`
+	Content     string `json:"content"`
+	CommentedAt time.Time `json:"commentedAt"`
 }
 
 type Post interface {
@@ -33,8 +34,8 @@ type Post interface {
 	Comments() []Comment // readonly, no copying for memory efficiency
 }
 type PostSeed struct {
-	PostId     uuid.UUID
-	AuthorName string
-	Content    string
-	PostedAt   time.Time
+	PostId     uuid.UUID `json:"postId"`
+	AuthorName string `json:"authorName"`
+	Content    string `json:"content"`
+	PostedAt   time.Time `json:"postedAt"`
 }

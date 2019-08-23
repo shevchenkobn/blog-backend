@@ -13,9 +13,18 @@ components:
     Uuid:
       type: string
       pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$
-    NonEmptyString:
+    AuthorName:
       type: string
       minLength: 1
+      maxLength: 128
+    PostContent:
+      type: string
+      minLength: 1
+      maxLength: 8096
+    CommentContent:
+      type: string
+      minLength: 1
+      maxLength: 1024
     Date:
       type: string
       format: date-time
@@ -32,9 +41,9 @@ components:
         postId:
           $ref: '#/components/schemas/Uuid'
         authorName:
-          $ref: '#/components/schemas/NonEmptyString'
+          $ref: '#/components/schemas/AuthorName'
         content:
-          $ref: '#/components/schemas/NonEmptyString'
+          $ref: '#/components/schemas/PostContent'
         postedAt:
           $ref: '#/components/schemas/DateFromUser'
       additionalProperties: false
@@ -49,9 +58,9 @@ components:
         postId:
           $ref: '#/components/schemas/Uuid'
         authorName:
-          $ref: '#/components/schemas/NonEmptyString'
+          $ref: '#/components/schemas/AuthorName'
         content:
-          $ref: '#/components/schemas/NonEmptyString'
+          $ref: '#/components/schemas/PostContent'
         postedAt:
           $ref: '#/components/schemas/Date'
       additionalProperties: false
@@ -67,9 +76,9 @@ components:
         postId:
           $ref: '#/components/schemas/Uuid'
         authorName:
-          $ref: '#/components/schemas/NonEmptyString'
+          $ref: '#/components/schemas/AuthorName'
         content:
-          $ref: '#/components/schemas/NonEmptyString'
+          $ref: '#/components/schemas/CommentContent'
         commentedAt:
           $ref: '#/components/schemas/DateFromUser'
       additionalProperties: false
@@ -87,9 +96,9 @@ components:
         postId:
           $ref: '#/components/schemas/Uuid'
         authorName:
-          $ref: '#/components/schemas/NonEmptyString'
+          $ref: '#/components/schemas/AuthorName'
         content:
-          $ref: '#/components/schemas/NonEmptyString'
+          $ref: '#/components/schemas/CommentContent'
         commentedAt:
           $ref: '#/components/schemas/Date'
       additionalProperties: false

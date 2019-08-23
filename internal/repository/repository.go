@@ -9,7 +9,7 @@ type ModelError struct {
 	Code string
 }
 func (e ModelError) Error() string {
-	return "ModelError:" + e.Code
+	return "ModelError: " + e.Code
 }
 
 type Posts interface {

@@ -47,7 +47,7 @@ func (s *Server) ListenAndWait() {
 func (s *Server) Close() {
 	var err error
 	for _, srv := range s.servers {
-		newErr := srv.Shutdown(context.TODO())
+		newErr := srv.Shutdown(context.Background())
 		if newErr != nil {
 			if err != nil {
 				s.logger.Errorf("Error while stopping server: %v", err)
@@ -71,7 +71,7 @@ func NewServer(config config.Config, handlers map[string]http.Handler, exitHandl
 	r.UseHandlers(handlers)
 	r.UseMiddleware(
 		ErrorHandler(logger),
-		middleware.SetHeader("content-type", "application/json"),
+		middleware.SetHeader(http.CanonicalHeaderKey("content-type"), "application/json"),
 	)
 	r.ErrorHandler = func(w http.ResponseWriter, r *http.Request, data string, code int) {
 		switch data {
